@@ -7,6 +7,11 @@
   </picture>
 </a>
 
+![GitHub Tag](https://img.shields.io/github/v/tag/CSC478-WCU/terraform-provider-fabric?style=plastic&logo=terraform&logoColor=%23844FBA&label=latest&color=%23844FBA&link=https%3A%2F%2Fgithub.com%2FCSC478-WCU%2Fterraform-provider-fabric%2Freleases)
+ ![Terraform Provider Downloads](https://img.shields.io/terraform/provider/dt/926415?style=plastic&logo=terraform&logoColor=%23844FBA&label=downloads&color=%23844FBA&link=https%3A%2F%2Fregistry.terraform.io%2Fproviders%2FCSC478-WCU%2Ffabric)
+
+
+
 # Terraform Provider for FABRIC Testbed
 
 This Terraform provider allows you to manage resources on the **FABRIC Testbed**. It supports creating, reading, updating, and deleting slices (multi-node experiments) as well as querying available resources and sites.
@@ -204,3 +209,4 @@ Feel free to open an issue or submit a pull request. All contributions are welco
 ## License
 
 MIT License.
+

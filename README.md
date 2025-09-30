@@ -1,3 +1,45 @@
+# Terraform Provider for FABRIC Testbed
+
+This Terraform provider allows you to manage resources on the **FABRIC Testbed**. It supports creating, reading, updating, and deleting slices (multi-node experiments) as well as querying available resources and sites.
+
+> **Disclaimer**: This provider is **not maintained** by the official FABRIC Testbed team. It is an open-source project developed at **West Chester University** to provide a convenient way to manage resources on the FABRIC Testbed using Terraform.
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Requirements](#requirements)
+3. [Installation](#installation)
+4. [Token Authentication](#token-authentication)
+5. [Usage Examples](#usage-examples)
+6. [Data Sources](#data-sources)
+7. [Roadmap](#roadmap)
+8. [Contributing](#contributing)
+9. [License](#license)
+
+---
+
+## Overview
+
+This provider IaC integration with the FABRIC Testbed, allowing you to automate the creation and management of resources on the testbed via Terraform. You can manage:
+
+- **Slices**: Create, read, update, and delete testbed slices (multi-node topologies).
+- **Resources**: List available resources such as compute instances, storage, etc.
+- **Sites**: Query information about available FABRIC testbed sites.
+
+---
+
+## Requirements
+
+- **Terraform**: v1.0 or higher
+- **FABRIC API Token**: A valid token for accessing the FABRIC orchestrator.
+- **FABRIC SSH Key**: An SSH key to access the nodes in the slices.
+
+---
+
+## Installation
+
+To use this provider, define it in your Terraform configuration:
+
 ```hcl
 terraform {
   required_providers {
@@ -13,135 +55,129 @@ provider "fabric" {
   endpoint = var.fabric_endpoint
   ssh_key  = var.fabric_ssh_key
 }
+```
 
-data "fabric_sites" "all" {}
+You can set the values for `FABRIC_TOKEN` and `FABRIC_SSH_KEY` via environment variables or in your `terraform.tfvars`.
 
-resource "fabric_slice" "sample" {
-  name = var.slice_name
+---
 
-  topology = {
+## Token Authentication
+
+To authenticate with the FABRIC testbed, you will need to use an `id_token` obtained from the [FABRIC Credentials Manager](https://cm.fabric-testbed.net/). After logging into the Credentials Manager, you can create a token by selecting the **id_token** option.
+
+### Extracting the `id_token`
+
+Once logged into the [FABRIC Credentials Manager](https://cm.fabric-testbed.net/), create a token by selecting the **id_token** option. You will be presented with a response similar to the following:
+
+```json
+{
+    "comment": "Created via GUI",
+    "created_at": "2025-09-30 17:59:51 +0000",
+    "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6Inl1ZmVrV...", // THIS VALUE HERE
+    "refresh_token": "NB2HI4DTHIXS6Y3JNRXWO33OFZXXEZZPN5QXK5DIGIXTCODFGZQTQZBZGN...",
+    "state": "Valid"
+}
+```
+
+Here, the `id_token` is what you will use in the next step.
+
+### Passing the `id_token` to the Provider
+
+In your `terraform.tfvars` or environment variables, you can pass the `id_token` as follows:
+
+```hcl
+provider "fabric" {
+  token    = var.fabric_token  # This should be the id_token value you obtained
+  endpoint = var.fabric_endpoint
+  ssh_key  = var.fabric_ssh_key
+}
+```
+
+Alternatively, you can set the environment variable for `FABRIC_TOKEN` to the `id_token` value:
+
+```bash
+export FABRIC_TOKEN="eyJhbGciOiJSUzI1NiIsImtpZCI6Inl1ZmVrV..."
+```
+
+This will allow your Terraform provider to authenticate against the FABRIC testbed.
+
+---
+
+## Usage Examples
+
+### Creating a Slice (VMs)
+
+```hcl
+resource "fabric_slice" "my_slice" {
+  name          = "my-slice"
+  lease_end_time = "2023-12-01T00:00:00Z"  # Optional, defaults to 24 hours from now
+
+  topology {
     nodes = [
       {
-        name          = "primary"
-        site          = var.primary_site
+        name          = "node1"
+        site          = "CLEM"
         type          = "VM"
-        image_ref     = var.image_ref
-        instance_type = var.instance_type
-        cores         = var.node_cores
-        ram           = var.node_ram
-        disk          = var.node_disk
+        image_ref     = "default-ubuntu"
+        instance_type = "m1.small"
+        cores         = 2
+        ram           = 4096
+        disk          = 20
       },
       {
-        name          = "peer"
-        site          = var.secondary_site == "" ? var.primary_site : var.secondary_site
+        name          = "node2"
+        site          = "NCSA"
         type          = "VM"
-        image_ref     = var.image_ref
-        instance_type = var.instance_type
-        cores         = var.node_cores
-        ram           = var.node_ram
-        disk          = var.node_disk
+        image_ref     = "default-ubuntu"
+        instance_type = "m1.medium"
+        cores         = 2
+        ram           = 4096
+        disk          = 20
       }
     ]
 
     links = [
       {
-        name   = "primary-peer"
-        source = "primary"
-        target = "peer"
+        name   = "link1"
+        source = "node1"
+        target = "node2"
       }
     ]
   }
-
-  ssh_keys = var.fabric_ssh_key == "" ? [] : [var.fabric_ssh_key]
-}
-
-output "available_sites" {
-  description = "Sample of discovered sites for reference"
-  value       = data.fabric_sites.all.sites
-}
-
-output "slice_state" {
-  value = fabric_slice.sample.state
 }
 ```
-```
-variable "fabric_token" {
-  description = "FABRIC API token. Can also be set via FABRIC_TOKEN environment variable."
-  type        = string
-}
 
-variable "fabric_endpoint" {
-  description = "FABRIC orchestrator API endpoint."
-  type        = string
-  default     = "https://orchestrator.fabric-testbed.net"
-}
+---
 
-variable "fabric_ssh_key" {
-  description = "SSH public key to inject into the slice. Leave empty to rely on provider default."
-  type        = string
-  default     = ""
-}
+## Data Sources
 
-variable "slice_name" {
-  description = "Name for the sample slice."
-  type        = string
-  default     = "fabric-sample"
-}
+### `fabric_resources`
+List available resources in FABRIC:
 
-variable "primary_site" {
-  description = "Primary FABRIC site for the first node."
-  type        = string
-  default     = "CLEM"
-}
-
-variable "secondary_site" {
-  description = "Optional second site for the peer node. Leave empty to reuse the primary site."
-  type        = string
-  default     = ""
-}
-
-variable "image_ref" {
-  description = "Image reference to use for nodes."
-  type        = string
-  default     = "default_rocky_8,qcow2"
-}
-
-variable "instance_type" {
-  description = "Instance type to use for nodes."
-  type        = string
-  default     = "fabric.c2.m2.d10"
-}
-
-variable "node_cores" {
-  description = "CPU cores for each node."
-  type        = number
-  default     = 2
-}
-
-variable "node_ram" {
-  description = "RAM (GB) for each node."
-  type        = number
-  default     = 2
-}
-
-variable "node_disk" {
-  description = "Disk size (GB) for each node."
-  type        = number
-  default     = 10
-}
-```
 ```hcl
-# Copy this file to terraform.tfvars (gitignored) and populate with real values
-# or set the equivalent environment variables before running Terraform.
-
-fabric_endpoint  = "https://orchestrator.fabric-testbed.net"
-slice_name       = "fabric-dev-slice"
-primary_site     = "CLEM"
-secondary_site   = "NCSA"
-image_ref        = "default_rocky_8,qcow2"
-instance_type    = "fabric.c2.m2.d10"
-node_cores       = 2
-node_ram         = 2
-fabric_token    = ""
-ssh_key         = ""
+data "fabric_resources" "available_resources" {}
 ```
+
+### `fabric_sites`
+Get information about FABRIC testbed sites:
+
+```hcl
+data "fabric_sites" "all_sites" {}
+```
+
+---
+
+## Roadmap
+- [ ] Improve state handling (reduce reliance on `terraform apply` refresh).
+- [ ] Add support for more FABRIC resources (storage, networking, etc.).
+- [ ] Expand documentation and usage examples.
+
+---
+
+## Contributing
+Feel free to open an issue or submit a pull request. All contributions are welcome.
+
+---
+
+## License
+MIT License.

@@ -2,147 +2,117 @@ package provider
 
 import (
 	"context"
-	"os"
 
+	"github.com/csc478-wcu/terraform-provider-fabric/internal/clients/orchestrator"
+	resourcesds "github.com/csc478-wcu/terraform-provider-fabric/internal/datasources/resources"
+	sitesds "github.com/csc478-wcu/terraform-provider-fabric/internal/datasources/sites"
+	"github.com/csc478-wcu/terraform-provider-fabric/internal/resources/slice"
+	"github.com/csc478-wcu/terraform-provider-fabric/internal/runtime"
+	"github.com/csc478-wcu/terraform-provider-fabric/internal/services"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
+	pframework "github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
-	openapi "github.com/csc478-wcu/fabric-orchestrator-go-client"
-	"github.com/csc478-wcu/terraform-provider-fabric/internal/client"
-	"github.com/csc478-wcu/terraform-provider-fabric/internal/fabric_client_wrapper"
 )
 
-// Ensure provider defined types fully satisfy framework interfaces.
-var _ provider.Provider = &FabricProvider{}
+var _ pframework.Provider = &FabricProvider{}
 
-// FabricProvider defines the provider implementation.
 type FabricProvider struct {
-	// version is set to the provider version on release, "dev" when the
-	// provider is built and ran locally, and "test" when running acceptance
-	// testing.
 	version string
 }
 
-// FabricProviderModel describes the provider data model.
 type FabricProviderModel struct {
 	Token    types.String `tfsdk:"token"`
 	Endpoint types.String `tfsdk:"endpoint"`
 	SSHKey   types.String `tfsdk:"ssh_key"`
 }
 
-func (p *FabricProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+func (p *FabricProvider) Metadata(_ context.Context, req pframework.MetadataRequest, resp *pframework.MetadataResponse) {
 	resp.TypeName = "fabric"
 	resp.Version = p.version
 }
 
-func (p *FabricProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *FabricProvider) Schema(_ context.Context, _ pframework.SchemaRequest, resp *pframework.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "The Fabric provider allows you to manage FABRIC testbed resources using Terraform.",
+		MarkdownDescription: "FABRIC provider for managing testbed slices and resources.",
 		Attributes: map[string]schema.Attribute{
 			"token": schema.StringAttribute{
-				MarkdownDescription: "The FABRIC API token. Can also be set via the FABRIC_TOKEN environment variable.",
+				MarkdownDescription: "FABRIC API token (or FABRIC_TOKEN).",
 				Optional:            true,
 				Sensitive:           true,
 			},
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "The FABRIC Orchestrator API endpoint. Defaults to https://orchestrator.fabric-testbed.net",
+				MarkdownDescription: "FABRIC Orchestrator API endpoint.",
 				Optional:            true,
 			},
 			"ssh_key": schema.StringAttribute{
-				MarkdownDescription: "Default SSH public key for instances. Can also be set via FABRIC_SSH_KEY environment variable.",
+				MarkdownDescription: "Default SSH public key (or FABRIC_SSH_KEY).",
 				Optional:            true,
 			},
 		},
 	}
 }
 
-func (p *FabricProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data FabricProviderModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-
+func (p *FabricProvider) Configure(ctx context.Context, req pframework.ConfigureRequest, resp *pframework.ConfigureResponse) {
+	var cfg FabricProviderModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &cfg)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Default configuration values
-	token := os.Getenv("FABRIC_TOKEN")
-	endpoint := "https://orchestrator.fabric-testbed.net"
-	sshKey := os.Getenv("FABRIC_SSH_KEY")
-
-	if !data.Token.IsNull() {
-		token = data.Token.ValueString()
+	token := getenvOr("FABRIC_TOKEN", "")
+	if !cfg.Token.IsNull() {
+		token = cfg.Token.ValueString()
 	}
-
-	if !data.Endpoint.IsNull() {
-		endpoint = data.Endpoint.ValueString()
-	}
-
-	if !data.SSHKey.IsNull() {
-		sshKey = data.SSHKey.ValueString()
-	}
-
 	if token == "" {
-		resp.Diagnostics.AddError(
-			"Missing API Token",
-			"The provider cannot create the FABRIC API client as there is a missing or empty value for the token. "+
-				"Set the token value in the configuration or use the FABRIC_TOKEN environment variable.",
-		)
-	}
-
-	if resp.Diagnostics.HasError() {
+		resp.Diagnostics.AddError("Missing API Token",
+			"Provide 'token' in configuration or set FABRIC_TOKEN.")
 		return
 	}
 
-	// Create API client
-	cfg := openapi.NewConfiguration()
-	cfg.Servers = openapi.ServerConfigurations{
-		{
-			URL: endpoint,
-		},
+	endpoint := defaultEndpoint
+	if !cfg.Endpoint.IsNull() && cfg.Endpoint.ValueString() != "" {
+		endpoint = cfg.Endpoint.ValueString()
+	}
+	sshKey := getenvOr("FABRIC_SSH_KEY", "")
+	if !cfg.SSHKey.IsNull() && cfg.SSHKey.ValueString() != "" {
+		sshKey = cfg.SSHKey.ValueString()
 	}
 
-	apiClient := fabric_client_wrapper.NewFabricClientWrapper(cfg)
-	fabricClient := client.NewFabricClient(apiClient, token)
+	orc := orchestrator.New(orchestrator.Config{
+		Endpoint: endpoint,
+		Token:    token,
+	})
+	slicesSvc := services.NewSlicesService(orc)
+	resSvc := services.NewResourcesService(orc)
 
-	// Create provider client data
-	providerData := &FabricProviderData{
-		Client:        fabricClient,
-		Endpoint:      endpoint,
+	deps := &runtime.Deps{
+		Slices:        slicesSvc,
+		Resources:     resSvc,
 		DefaultSSHKey: sshKey,
+		Endpoint:      endpoint,
 	}
 
-	resp.DataSourceData = providerData
-	resp.ResourceData = providerData
+	resp.DataSourceData = deps
+	resp.ResourceData = deps
 }
 
-func (p *FabricProvider) Resources(ctx context.Context) []func() resource.Resource {
+func (p *FabricProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewSliceResource,
+		func() resource.Resource { return slice.New() },
 	}
 }
 
-func (p *FabricProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *FabricProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewResourcesDataSource,
-		NewSitesDataSource,
+		func() datasource.DataSource { return resourcesds.New() },
+		func() datasource.DataSource { return sitesds.New() },
 	}
 }
 
-func New(version string) func() provider.Provider {
-	return func() provider.Provider {
-		return &FabricProvider{
-			version: version,
-		}
+func New(v string) func() pframework.Provider {
+	return func() pframework.Provider {
+		return &FabricProvider{version: v}
 	}
-}
-
-// FabricProviderData contains the configured client and settings
-type FabricProviderData struct {
-	Client        client.FabricClient
-	Endpoint      string
-	DefaultSSHKey string
 }

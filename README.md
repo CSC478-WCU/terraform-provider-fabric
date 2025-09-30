@@ -1,10 +1,20 @@
+<!-- markdownlint-disable first-line-h1 no-inline-html -->
+<a href="https://terraform.io">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/terraform_logo_dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/terraform_logo_light.svg">
+    <img src=".github/terraform_logo_light.svg" alt="Terraform logo" title="Terraform" align="right" height="50">
+  </picture>
+</a>
+
 # Terraform Provider for FABRIC Testbed
 
 This Terraform provider allows you to manage resources on the **FABRIC Testbed**. It supports creating, reading, updating, and deleting slices (multi-node experiments) as well as querying available resources and sites.
 
 > **Disclaimer**: This provider is **not maintained** by the official FABRIC Testbed team. It is an open-source project developed at **West Chester University** to provide a convenient way to manage resources on the FABRIC Testbed using Terraform.
 
-> **Note:** This is built off the Fabric Orchestrator Client here: https://github.com/CSC478-WCU/fabric-orchestrator-go-client 
+> **Note:** This is built off the Fabric Orchestrator Client here: https://github.com/CSC478-WCU/fabric-orchestrator-go-client
+
 ## Table of Contents
 
 - [Terraform Provider for FABRIC Testbed](#terraform-provider-for-fabric-testbed)
@@ -194,5 +204,3 @@ Feel free to open an issue or submit a pull request. All contributions are welco
 ## License
 
 MIT License.
-
-

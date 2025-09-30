@@ -84,7 +84,7 @@ You can set the values for `FABRIC_TOKEN` and `FABRIC_SSH_KEY` via environment v
 
 ## Token Authentication
 
-To authenticate with the FABRIC testbed, you will need to use an `id_token` obtained from the [FABRIC Credentials Manager](https://cm.fabric-testbed.net/). After logging into the Credentials Manager, you can create a token by selecting the **id_token** option.
+To authenticate with the FABRIC testbed, you will need to use an `id_token` obtained from the [FABRIC Credentials Manager](https://cm.fabric-testbed.net/). After logging into the Credentials Manager, you can create a token by selecting the **Create Token** option.
 
 ### Extracting the `id_token`
 
@@ -207,6 +207,7 @@ Feel free to open an issue or submit a pull request. All contributions are welco
 ## License
 
 MIT License.
+
 
 
 

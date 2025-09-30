@@ -13,7 +13,7 @@ import (
 //go:generate terraform fmt -recursive ../../examples/
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate -rendered-website-dir ../../docs
 
-var buildVersion = "dev" // overridden by goreleaser
+var buildVersion = "v0.1.0" // overridden by goreleaser
 
 func main() {
 	var debug bool

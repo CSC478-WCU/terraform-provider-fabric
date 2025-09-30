@@ -6,15 +6,22 @@ This Terraform provider allows you to manage resources on the **FABRIC Testbed**
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Requirements](#requirements)
-3. [Installation](#installation)
-4. [Token Authentication](#token-authentication)
-5. [Usage Examples](#usage-examples)
-6. [Data Sources](#data-sources)
-7. [Roadmap](#roadmap)
-8. [Contributing](#contributing)
-9. [License](#license)
+- [Terraform Provider for FABRIC Testbed](#terraform-provider-for-fabric-testbed)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Token Authentication](#token-authentication)
+    - [Extracting the `id_token`](#extracting-the-id_token)
+    - [Passing the `id_token` to the Provider](#passing-the-id_token-to-the-provider)
+  - [Usage Examples](#usage-examples)
+    - [Creating a Slice (VMs)](#creating-a-slice-vms)
+  - [Data Sources](#data-sources)
+    - [`fabric_resources`](#fabric_resources)
+    - [`fabric_sites`](#fabric_sites)
+  - [Roadmap](#roadmap)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ---
 
@@ -71,11 +78,11 @@ Once logged into the [FABRIC Credentials Manager](https://cm.fabric-testbed.net/
 
 ```json
 {
-    "comment": "Created via GUI",
-    "created_at": "2025-09-30 17:59:51 +0000",
-    "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6Inl1ZmVrV...", // THIS VALUE HERE
-    "refresh_token": "NB2HI4DTHIXS6Y3JNRXWO33OFZXXEZZPN5QXK5DIGIXTCODFGZQTQZBZGN...",
-    "state": "Valid"
+  "comment": "Created via GUI",
+  "created_at": "2025-09-30 17:59:51 +0000",
+  "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6Inl1ZmVrV...", // THIS VALUE HERE
+  "refresh_token": "NB2HI4DTHIXS6Y3JNRXWO33OFZXXEZZPN5QXK5DIGIXTCODFGZQTQZBZGN...",
+  "state": "Valid"
 }
 ```
 
@@ -121,8 +128,8 @@ resource "fabric_slice" "my_slice" {
         image_ref     = "default-ubuntu"
         instance_type = "m1.small"
         cores         = 2
-        ram           = 4096
-        disk          = 20
+        ram           = 4 # GB
+        disk          = 10 # GB
       },
       {
         name          = "node2"
@@ -131,8 +138,8 @@ resource "fabric_slice" "my_slice" {
         image_ref     = "default-ubuntu"
         instance_type = "m1.medium"
         cores         = 2
-        ram           = 4096
-        disk          = 20
+        ram           = 4 # GB
+        disk          = 20 # GB
       }
     ]
 
@@ -152,6 +159,7 @@ resource "fabric_slice" "my_slice" {
 ## Data Sources
 
 ### `fabric_resources`
+
 List available resources in FABRIC:
 
 ```hcl
@@ -159,6 +167,7 @@ data "fabric_resources" "available_resources" {}
 ```
 
 ### `fabric_sites`
+
 Get information about FABRIC testbed sites:
 
 ```hcl
@@ -168,6 +177,7 @@ data "fabric_sites" "all_sites" {}
 ---
 
 ## Roadmap
+
 - [ ] Improve state handling (reduce reliance on `terraform apply` refresh).
 - [ ] Add support for more FABRIC resources (storage, networking, etc.).
 - [ ] Expand documentation and usage examples.
@@ -175,10 +185,11 @@ data "fabric_sites" "all_sites" {}
 ---
 
 ## Contributing
+
 Feel free to open an issue or submit a pull request. All contributions are welcome.
 
 ---
 
 ## License
-MIT License.
 
+MIT License.

@@ -20,7 +20,7 @@ This Terraform provider allows you to manage resources on the **FABRIC Testbed**
 
 ## Overview
 
-This provider IaC integration with the FABRIC Testbed, allowing you to automate the creation and management of resources on the testbed via Terraform. You can manage:
+This provides IaC (Infrastructure As Code) integration with the FABRIC Testbed, allowing you to automate the creation and management of resources on the testbed via Terraform. You can manage:
 
 - **Slices**: Create, read, update, and delete testbed slices (multi-node topologies).
 - **Resources**: List available resources such as compute instances, storage, etc.
@@ -181,3 +181,4 @@ Feel free to open an issue or submit a pull request. All contributions are welco
 
 ## License
 MIT License.
+

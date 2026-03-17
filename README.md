@@ -12,7 +12,7 @@
 
 # Terraform Provider for FABRIC Testbed
 
-This Terraform provider allows you to manage resources on the **FABRIC Testbed**. It supports creating, reading, updating, and deleting slices (multi-node experiments) as well as querying available resources and sites.
+This Terraform provider allows you to manage resources on the **FABRIC Testbed**. It supports creating, reading, updating, and deleting slices (multi-node experiments) as  well as querying available resources and sites.
 
 > **Disclaimer**: This provider is **not maintained** by the official FABRIC Testbed team. It is an open-source project developed by a student at **West Chester University** to provide a convenient way to manage resources on the FABRIC Testbed using Terraform.
 
@@ -159,36 +159,6 @@ resource "fabric_slice" "my_slice" {
   }
 }
 ```
-
----
-
-## Data Sources
-
-### `fabric_resources`
-
-List available resources in FABRIC:
-
-```hcl
-data "fabric_resources" "available_resources" {}
-```
-
-### `fabric_sites`
-
-Get information about FABRIC testbed sites:
-
-```hcl
-data "fabric_sites" "all_sites" {}
-```
-
----
-
-## Roadmap
-
-- [ ] Improve state handling (reduce reliance on `terraform apply` refresh).
-- [ ] Add support for more FABRIC resources (storage, networking, etc.).
-- [ ] Expand documentation and usage examples.
-
----
 
 ## Contributing
 

@@ -14,7 +14,7 @@
 
 This Terraform provider allows you to manage resources on the **FABRIC Testbed**. It supports creating, reading, updating, and deleting slices (multi-node experiments) as well as querying available resources and sites.
 
-> **Disclaimer**: This provider is **not maintained** by the official FABRIC Testbed team. It is an open-source project developed at **West Chester University** to provide a convenient way to manage resources on the FABRIC Testbed using Terraform.
+> **Disclaimer**: This provider is **not maintained** by the official FABRIC Testbed team. It is an open-source project developed by a student at **West Chester University** to provide a convenient way to manage resources on the FABRIC Testbed using Terraform.
 
 > **Note:** This is built off the Fabric Orchestrator Client here: https://github.com/CSC478-WCU/fabric-orchestrator-go-client
 

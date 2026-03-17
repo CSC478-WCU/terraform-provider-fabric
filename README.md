@@ -156,14 +156,6 @@ resource "fabric_slice" "my_slice" {
         disk          = 20 # GB
       }
     ]
-
-    links = [
-      {
-        name   = "link1"
-        source = "node1"
-        target = "node2"
-      }
-    ]
   }
 }
 ```
